@@ -1,0 +1,43 @@
+struct Elf {
+    id: usize,
+    calories: u32,
+}
+
+fn parser(s: String) -> Vec<Elf> {
+    s.split("\n\n")
+        .enumerate()
+        .map(|(n, g)| Elf {
+            id: n + 1,
+            calories: g
+                .split('\n')
+                .map(|line| line.parse::<u32>().unwrap())
+                .sum::<u32>(),
+        })
+        .collect()
+}
+
+fn solve(elves: &Vec<Elf>) -> &Elf {
+    elves.into_iter().max_by_key(|e| e.calories).unwrap()
+}
+
+fn main() {
+    let elves = utils::load_puzzle_data({{DAY_NUM}}, parser);
+    let prepared_elf = solve(&elves);
+    println!(
+        "Solution 1: {} is carrying {} calories worth of food.",
+        prepared_elf.id, prepared_elf.calories
+    );
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{parser, solve};
+
+    #[test]
+    fn test_puzzle() {
+        let test_data = utils::load_puzzle_test({{DAY_NUM}}, 1, parser);
+        let solution = solve(&test_data);
+        assert_eq!(solution.id, 4);
+        assert_eq!(solution.calories, 24000);
+    }
+}
