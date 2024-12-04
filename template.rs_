@@ -1,32 +1,35 @@
-struct Elf {
-    id: usize,
-    calories: u32,
+use std::iter::zip;
+
+use nom::{
+    character::complete::{line_ending, space1, u32 as u32_parser},
+    multi::separated_list1,
+    sequence::separated_pair,
+    IResult,
+};
+
+fn num_pair(input: &str) -> IResult<&str, (u32, u32)> {
+    separated_pair(u32_parser, space1, u32_parser)(input)
 }
 
-fn parser(s: String) -> Vec<Elf> {
-    s.split("\n\n")
-        .enumerate()
-        .map(|(n, g)| Elf {
-            id: n + 1,
-            calories: g
-                .split('\n')
-                .map(|line| line.parse::<u32>().unwrap())
-                .sum::<u32>(),
-        })
-        .collect()
+fn parser(s: &str) -> IResult<&str, Vec<(u32, u32)>> {
+    separated_list1(line_ending, num_pair)(s)
 }
 
-fn solve(elves: &Vec<Elf>) -> &Elf {
-    elves.into_iter().max_by_key(|e| e.calories).unwrap()
+fn solve(places: &[(u32, u32)]) -> u32 {
+    // Get the distance between each sorted pair and add them up
+    // sort
+    let (mut first, mut second): (Vec<u32>, Vec<u32>) = places.iter().map(|(f, s)| (f, s)).unzip();
+    first.sort_unstable();
+    second.sort_unstable();
+    let sorted_places = zip(first, second);
+    // add up diffs
+    sorted_places.fold(0, |a, p| a + p.0.abs_diff(p.1))
 }
 
 fn main() {
-    let elves = utils::load_puzzle_data({{DAY_NUM}}, parser);
-    let prepared_elf = solve(&elves);
-    println!(
-        "Solution 1: {} is carrying {} calories worth of food.",
-        prepared_elf.id, prepared_elf.calories
-    );
+    let places = utils::load_puzzle_data({{DAY_NUM}}, parser);
+    let distance_sum = solve(&places);
+    println!("Solution 1: Distance sum: {}", distance_sum);
 }
 
 #[cfg(test)]
@@ -37,7 +40,6 @@ mod tests {
     fn test_puzzle() {
         let test_data = utils::load_puzzle_test({{DAY_NUM}}, 1, parser);
         let solution = solve(&test_data);
-        assert_eq!(solution.id, 4);
-        assert_eq!(solution.calories, 24000);
+        assert_eq!(solution, 11);
     }
 }

@@ -14,7 +14,7 @@ except:
 new_day = "day{}".format(day_num)
 
 system(f"cargo init {new_day}")
-system(f"cd {new_day} && cargo add --path ../utils utils")
+system(f"cd {new_day} && cargo add --path ../utils utils && cargo add nom")
 
 with open(Path("puzzles") / f"{new_day}.txt", "a"):
     pass
