@@ -1,6 +1,6 @@
 # Description
 
-My repository of code for Advent of Code 2022!
+My repository of code for Advent of Code 2024!
 
 # Usage
 
