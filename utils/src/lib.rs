@@ -1,18 +1,20 @@
 #![allow(dead_code)]
 
+use nom::{bytes::complete::take, combinator::map, multi::many_till, IResult};
 use std::{
     cmp::Ordering,
     fmt::{self, Display},
     fs,
     path::Path,
 };
-use nom::IResult;
 
 use enum_iterator::Sequence;
 
 // Now with nom parser
 fn load_puzzle<T, F: FnOnce(&str) -> IResult<&str, T>>(puzzle_path: &Path, parser: F) -> T {
-    parser(&String::from_utf8(fs::read(puzzle_path).expect("Unable to open input!")).unwrap()).expect("Unable to parse input!").1
+    parser(&String::from_utf8(fs::read(puzzle_path).expect("Unable to open input!")).unwrap())
+        .expect("Unable to parse input!")
+        .1
 }
 
 pub fn load_puzzle_data<T, F: FnOnce(&str) -> IResult<&str, T>>(day: u32, parser: F) -> T {
@@ -21,10 +23,21 @@ pub fn load_puzzle_data<T, F: FnOnce(&str) -> IResult<&str, T>>(day: u32, parser
     load_puzzle(puzzle_path, parser)
 }
 
-pub fn load_puzzle_test<T, F: FnOnce(&str) -> IResult<&str, T>>(day: u32, test_number: u32, parser: F) -> T {
+pub fn load_puzzle_test<T, F: FnOnce(&str) -> IResult<&str, T>>(
+    day: u32,
+    test_number: u32,
+    parser: F,
+) -> T {
     let puzzle_filename = format!("../puzzles/day{day}_test{test_number}.txt");
     let puzzle_path = Path::new(&puzzle_filename);
     load_puzzle(puzzle_path, parser)
+}
+
+// Thanks Trequetrum! (https://github.com/rust-bakery/nom/issues/1594)
+pub fn drop_until<'a, T>(
+    parser: fn(&'a str) -> IResult<&'a str, T>,
+) -> impl FnMut(&'a str) -> IResult<&'a str, T> {
+    map(many_till(take(1u8), parser), |(_, matched)| matched)
 }
 
 // Thank you Francis Gagné! : https://stackoverflow.com/a/42356713
@@ -358,7 +371,7 @@ pub struct BoxIter<'a, T> {
     clock_direction: ClockDirection,
     center_x: isize,
     center_y: isize,
-    halt: bool
+    halt: bool,
 }
 
 impl<'a, T> BoxIter<'a, T>
@@ -379,7 +392,7 @@ where
             clock_direction,
             center_x,
             center_y,
-            halt: false
+            halt: false,
         }
     }
 }
@@ -392,7 +405,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.halt {
-            return None
+            return None;
         }
         // Loop until we find a cell or exhaust directions
         loop {
@@ -505,7 +518,11 @@ pub struct GridCoordinateIter {
 
 impl GridCoordinateIter {
     pub fn new(start: Point, end: Point) -> GridCoordinateIter {
-        GridCoordinateIter { start, end, next_point: start }
+        GridCoordinateIter {
+            start,
+            end,
+            next_point: start,
+        }
     }
 }
 
