@@ -136,6 +136,7 @@ where
         ret_cells
     }
 
+    /// Returns an iterator over each cell in the grid. Returns the Cell.
     pub fn cell_iter(&self) -> core::slice::Iter<'_, T> {
         self.cells.iter()
     }
@@ -424,11 +425,11 @@ where
 
             match self.clock_direction {
                 ClockDirection::Clockwise => {
-                    self.next_direction = enum_iterator::next_cycle(&self.next_direction).unwrap()
+                    self.next_direction = enum_iterator::next_cycle(&self.next_direction)
                 }
                 ClockDirection::CounterClockwise => {
                     self.next_direction =
-                        enum_iterator::previous_cycle(&self.next_direction).unwrap()
+                        enum_iterator::previous_cycle(&self.next_direction)
                 }
             };
             if self.next_direction.eq(self.start_direction) {
