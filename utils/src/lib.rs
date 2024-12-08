@@ -235,7 +235,7 @@ where
 /*
     Enums
 */
-#[derive(Debug, PartialEq, Clone, Sequence)]
+#[derive(Debug, PartialEq, Clone, Sequence, Copy)]
 pub enum CardinalDirection {
     North,
     NorthEast,
@@ -245,6 +245,42 @@ pub enum CardinalDirection {
     SouthWest,
     West,
     NorthWest,
+}
+
+/// Rotates CardinalDirection
+pub enum RotateAmount {
+    _45,
+    _90,
+    _135,
+    _180,
+    _225,
+    _270,
+    _315,
+}
+
+impl CardinalDirection {
+    fn skip_multi(dir: &CardinalDirection, amt: usize) -> CardinalDirection {
+        if amt > 0 {
+            let mut new_dir = enum_iterator::next_cycle(dir);
+            for _ in 1..amt {
+                new_dir = enum_iterator::next_cycle(&new_dir)
+            }
+            return new_dir;
+        }
+        *dir
+    }
+
+    pub fn rotate_by_angle(&self, amt: &RotateAmount) -> CardinalDirection {
+        match amt {
+            RotateAmount::_45 => CardinalDirection::skip_multi(self, 1),
+            RotateAmount::_90 => CardinalDirection::skip_multi(self, 2),
+            RotateAmount::_135 => CardinalDirection::skip_multi(self, 3),
+            RotateAmount::_180 => CardinalDirection::skip_multi(self, 4),
+            RotateAmount::_225 => CardinalDirection::skip_multi(self, 5),
+            RotateAmount::_270 => CardinalDirection::skip_multi(self, 6),
+            RotateAmount::_315 => CardinalDirection::skip_multi(self, 7),
+        }
+    }
 }
 
 pub enum ClockDirection {
@@ -389,7 +425,7 @@ where
         BoxIter {
             grid,
             start_direction,
-            next_direction: start_direction.clone(),
+            next_direction: *start_direction,
             clock_direction,
             center_x,
             center_y,
@@ -428,8 +464,7 @@ where
                     self.next_direction = enum_iterator::next_cycle(&self.next_direction)
                 }
                 ClockDirection::CounterClockwise => {
-                    self.next_direction =
-                        enum_iterator::previous_cycle(&self.next_direction)
+                    self.next_direction = enum_iterator::previous_cycle(&self.next_direction)
                 }
             };
             if self.next_direction.eq(self.start_direction) {
@@ -828,13 +863,39 @@ impl Point {
     pub fn new(x: isize, y: isize) -> Point {
         Point { x, y }
     }
+
+    /// Add an amount to the Point based on a cardinal direction
+    pub fn add(&mut self, amt: isize, direction: CardinalDirection) {
+        match direction {
+            CardinalDirection::North => self.y -= amt,
+            CardinalDirection::South => self.y += amt,
+            CardinalDirection::East => self.x += amt,
+            CardinalDirection::West => self.x -= amt,
+            CardinalDirection::NorthEast => {
+                self.x += amt;
+                self.y -= amt
+            }
+            CardinalDirection::NorthWest => {
+                self.x -= amt;
+                self.y -= amt
+            }
+            CardinalDirection::SouthEast => {
+                self.x += amt;
+                self.y += amt
+            }
+            CardinalDirection::SouthWest => {
+                self.x -= amt;
+                self.y -= amt
+            }
+        };
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::fmt::Display;
 
-    use crate::{DynamicGrid, Growable, StaticGrid};
+    use crate::{CardinalDirection, DynamicGrid, Growable, StaticGrid};
 
     /*
     Test Structs
@@ -921,5 +982,13 @@ mod tests {
             s.push(c.value);
         }
         assert_eq!(s, "*....W");
+    }
+
+    #[test]
+    fn test_rotating_cardinal_direction() {
+        assert_eq!(CardinalDirection::North.rotate_by_angle(&crate::RotateAmount::_45), CardinalDirection::NorthEast);
+        assert_eq!(CardinalDirection::North.rotate_by_angle(&crate::RotateAmount::_180), CardinalDirection::South);
+        assert_eq!(CardinalDirection::South.rotate_by_angle(&crate::RotateAmount::_90), CardinalDirection::West);
+        assert_eq!(CardinalDirection::South.rotate_by_angle(&crate::RotateAmount::_180), CardinalDirection::North);
     }
 }
